@@ -1,33 +1,16 @@
-const request = require('request');
+const { nextISSTimesForMyLocation } = require('./iss');
 
-/**
- * Makes a single API request to retrieve upcoming ISS fly over times the for the given lat/lng coordinates.
- * Input:
- *   - An object with keys `latitude` and `longitude`
- *   - A callback (to pass back an error or the array of resulting data)
- * Returns (via Callback):
- *   - An error, if any (nullable)
- *   - The fly over times as an array of objects (null if error)
- */
-const fetchISSFlyOverTimes = function(coords, callback) {
-  const url = `https://iss-flyover.herokuapp.com/json/?lat=${coords.latitude}&lon=${coords.longitude}`;
-
-  request(url, (error, response, body) => {
-    if (error) {
-      return callback(error, null);
-    }
-
-    if (response.statusCode !== 200) {
-      const msg = `Status Code ${response.statusCode} when fetching ISS pass times: ${body}`;
-      return callback(Error(msg), null);
-    }
-
-    const data = JSON.parse(body);
-    callback(null, data.response);
-  });
+const printPassTimes = function(passTimes) {
+  for (const pass of passTimes) {
+    const datetime = new Date(pass.risetime * 1000);
+    const duration = pass.duration;
+    console.log(`Next pass at ${datetime} for ${duration} seconds!`);
+  }
 };
 
-module.exports = {
-  fetchCoordsByIP,
-  fetchISSFlyOverTimes
-};
+nextISSTimesForMyLocation((error, passTimes) => {
+  if (error) {
+    return console.log("It didn't work!", error.message);
+  }
+  printPassTimes(passTimes);
+});
